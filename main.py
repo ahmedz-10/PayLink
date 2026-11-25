@@ -1,7 +1,8 @@
-
-from fastapi import FastAPI
 import os
 import psycopg
+
+from fastapi import FastAPI
+
 
 app = FastAPI(title="PayLink API")
 
@@ -19,17 +20,17 @@ def health():
             port=5432,
             dbname=os.getenv("DB_NAME", "paylink"),
             user=os.getenv("DB_USER", "paylink_user"),
-            password=os.getenv("DB_PASSWORD", "paylink_password")
+            password=os.getenv("DB_PASSWORD", "paylink_password"),
         ) as connection:
             connection.execute("SELECT 1")
 
         return {
             "application": "running",
-            "database": "connected"
+            "database": "connected",
         }
 
-    except Exception:
+    except psycopg.Error:
         return {
             "application": "running",
-            "database": "disconnected"
+            "database": "disconnected",
         }
