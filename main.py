@@ -1,8 +1,8 @@
 
-from fastapi import FastAPI
 import os
 import psycopg
 
+from fastapi import FastAPI
 app = FastAPI(title="PayLink API")
 
 
