@@ -1,0 +1,47 @@
+
+@startuml
+title PayLink - Payment Life Cycle State Diagram
+
+[*] --> Initiated
+
+Initiated --> FundsHeld : Fraud checks pass\nand sufficient funds
+Initiated --> Rejected : Fraud checks fail\nor insufficient funds
+
+FundsHeld --> SentToBiller : Payment request sent to biller
+
+SentToBiller --> Completed : Biller confirms payment
+SentToBiller --> Failed : Biller refuses payment
+SentToBiller --> Unknown : Timeout (10 seconds)
+
+Unknown --> Completed : Biller later confirms\n(callback / retry / settlement)
+Unknown --> Failed : Biller refuses later\nor reconciliation finds no payment
+
+Failed --> Refunded : Hold released to wallet
+
+Completed --> [*]
+Rejected --> [*]
+Refunded --> [*]
+
+note right of FundsHeld
+  Funds are held before
+  calling the biller.
+end note
+
+note right of Unknown
+  Money remains held.
+  Never refund automatically.
+
+  Retry after:
+  1 minute, 5 minutes,
+  and 15 minutes.
+
+  After 3 retries,
+  wait for reconciliation.
+end note
+
+note right of Refunded
+  Money is returned
+  to the customer's wallet.
+end note
+
+@enduml

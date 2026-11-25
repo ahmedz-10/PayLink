@@ -1,0 +1,53 @@
+@startuml
+title PayLink - Pay a Bill
+
+actor Customer
+participant "PayLink System" as PayLink
+participant "Biller Company" as Biller
+
+== Bill Inquiry ==
+
+Customer -> PayLink: Select biller and enter bill details
+PayLink -> Biller: Request bill information
+Biller --> PayLink: Return bill amount
+PayLink -> PayLink: Calculate service fee and total
+PayLink --> Customer: Display amount, fee and total
+
+== Payment ==
+
+Customer -> PayLink: Confirm payment
+
+PayLink -> PayLink: Check duplicate request
+PayLink -> PayLink: Check limits and fraud rules
+
+alt Invalid request or insufficient balance
+    PayLink --> Customer: Reject payment with reason
+
+else Valid payment
+
+    PayLink -> PayLink: Hold wallet funds
+    PayLink -> Biller: Send payment request
+
+    alt Payment successful
+        Biller --> PayLink: Payment confirmed
+        PayLink -> PayLink: Complete payment and record transaction
+        PayLink --> Customer: Send SMS and Push notification
+
+    else Payment failed
+        Biller --> PayLink: Payment rejected
+        PayLink -> PayLink: Release held funds
+        PayLink --> Customer: Send failure notification
+
+    else Biller timeout
+        Biller --> PayLink: No response within 10 seconds
+        PayLink -> PayLink: Set status to Unknown
+        Note over PayLink
+          Keep funds held.
+          Retry checking payment status
+          up to 3 times.
+        end note
+        PayLink --> Customer: Payment is being processed
+    end
+end
+
+@enduml

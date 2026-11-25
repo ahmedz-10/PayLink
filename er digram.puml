@@ -1,0 +1,199 @@
+
+@startuml
+title PayLink - ER Diagram
+
+hide circle
+skinparam linetype ortho
+skinparam entity {
+    BackgroundColor White
+    BorderColor Black
+}
+
+entity Customer {
+    * customer_id : INT <<PK>>
+    --
+    name : VARCHAR
+    email : VARCHAR
+    phone : VARCHAR
+    verification_level : VARCHAR
+    status : VARCHAR
+}
+
+entity Agent {
+    * agent_id : INT <<PK>>
+    --
+    name : VARCHAR
+    phone : VARCHAR
+}
+
+entity Wallet {
+    * wallet_id : INT <<PK>>
+    --
+    customer_id : INT <<FK>>
+    agent_id : INT <<FK>>
+}
+
+entity LedgerEntry {
+    * entry_id : INT <<PK>>
+    --
+    wallet_id : INT <<FK>>
+    payment_id : INT <<FK>>
+    amount : DECIMAL
+    type : VARCHAR
+    date : DATETIME
+}
+
+entity Biller {
+    * biller_id : INT <<PK>>
+    --
+    name : VARCHAR
+    protocol : VARCHAR
+    status : VARCHAR
+}
+
+entity Service {
+    * service_id : INT <<PK>>
+    --
+    biller_id : INT <<FK>>
+    name : VARCHAR
+    min_amount : DECIMAL
+    max_amount : DECIMAL
+}
+
+entity BillInquiry {
+    * inquiry_id : INT <<PK>>
+    --
+    customer_id : INT <<FK>>
+    service_id : INT <<FK>>
+    bill_amount : DECIMAL
+    fee : DECIMAL
+    total : DECIMAL
+}
+
+entity Payment {
+    * payment_id : INT <<PK>>
+    --
+    customer_id : INT <<FK>>
+    wallet_id : INT <<FK>>
+    service_id : INT <<FK>>
+    agent_id : INT <<FK>>
+    inquiry_id : INT <<FK>>
+    idempotency_key : VARCHAR
+    amount : DECIMAL
+    fee : DECIMAL
+    status : VARCHAR
+}
+
+entity WalletHold {
+    * hold_id : INT <<PK>>
+    --
+    payment_id : INT <<FK>>
+    wallet_id : INT <<FK>>
+    amount : DECIMAL
+    status : VARCHAR
+}
+
+entity FeeRule {
+    * fee_rule_id : INT <<PK>>
+    --
+    service_id : INT <<FK>>
+    fee_type : VARCHAR
+    fee_value : DECIMAL
+}
+
+entity Promotion {
+    * promotion_id : INT <<PK>>
+    --
+    biller_id : INT <<FK>>
+    start_date : DATE
+    end_date : DATE
+}
+
+entity Commission {
+    * commission_id : INT <<PK>>
+    --
+    payment_id : INT <<FK>>
+    agent_id : INT <<FK>>
+    amount : DECIMAL
+}
+
+entity Notification {
+    * notification_id : INT <<PK>>
+    --
+    payment_id : INT <<FK>>
+    customer_id : INT <<FK>>
+    channel : VARCHAR
+    status : VARCHAR
+    retry_count : INT
+}
+
+entity AuditLog {
+    * audit_id : INT <<PK>>
+    --
+    actor_id : INT
+    action : VARCHAR
+    date : DATETIME
+}
+
+entity Reconciliation {
+    * reconciliation_id : INT <<PK>>
+    --
+    biller_id : INT <<FK>>
+    file_name : VARCHAR
+    date : DATETIME
+    status : VARCHAR
+}
+
+entity ReconciliationRecord {
+    * record_id : INT <<PK>>
+    --
+    reconciliation_id : INT <<FK>>
+    payment_id : INT <<FK>>
+    difference_status : VARCHAR
+}
+
+entity BillerCallback {
+    * callback_id : INT <<PK>>
+    --
+    payment_id : INT <<FK>>
+    callback_status : VARCHAR
+    received_at : DATETIME
+}
+
+' Relationships
+
+Customer ||--|| Wallet
+Agent ||--o| Wallet
+
+Wallet ||--o{ LedgerEntry
+Wallet ||--o{ WalletHold
+
+Customer ||--o{ BillInquiry
+Service ||--o{ BillInquiry
+
+Customer ||--o{ Payment
+Wallet ||--o{ Payment
+Service ||--o{ Payment
+Agent |o--o{ Payment
+BillInquiry |o--o| Payment
+
+Payment ||--o| WalletHold
+Payment ||--o{ LedgerEntry
+
+Biller ||--o{ Service
+Service ||--o{ FeeRule
+Biller ||--o{ Promotion
+
+Payment ||--o| Commission
+Agent ||--o{ Commission
+
+Payment ||--o{ Notification
+Customer ||--o{ Notification
+
+Biller ||--o{ Reconciliation
+Reconciliation ||--o{ ReconciliationRecord
+Payment ||--o{ ReconciliationRecord
+
+Payment ||--o{ BillerCallback
+
+@enduml

@@ -1,0 +1,61 @@
+@startuml
+title PayLink - Refund a Failed Payment
+
+actor Customer
+participant "PayLink System" as PayLink
+participant "Biller Company" as Biller
+actor Support
+
+== Payment Failure ==
+
+PayLink -> Biller: Send payment request
+
+alt Biller rejects payment
+    Biller --> PayLink: Payment failed
+    PayLink -> PayLink: Update status to Failed
+    PayLink -> PayLink: Release held money to wallet
+    PayLink -> PayLink: Record refund in ledger and audit log
+    PayLink --> Customer: Send SMS and Push notification
+
+else Biller timeout
+    Biller --> PayLink: No response
+    PayLink -> PayLink: Set status to Unknown
+    Note over PayLink
+      Keep money held.
+      Do not refund automatically.
+    end note
+
+    Biller -> PayLink: Send later callback
+
+    alt Callback says Failed
+        PayLink -> PayLink: Ignore duplicate callbacks
+        PayLink -> PayLink: Update status to Failed
+        PayLink -> PayLink: Release held money
+        PayLink -> PayLink: Record in ledger and audit log
+        PayLink --> Customer: Send failure notification
+
+    else Callback says Success
+        PayLink -> PayLink: Update status to Completed
+        PayLink --> Customer: Send success notification
+    end
+end
+
+== Refund Request for Completed Payment (FR-27) ==
+
+opt Customer requests refund for completed payment
+    Customer -> PayLink: Submit refund request
+    PayLink -> Support: Send request for approval
+
+    alt Support approves
+        Support --> PayLink: Approve refund
+        PayLink -> PayLink: Return money to customer wallet
+        PayLink -> PayLink: Record money movement in ledger and audit log
+        PayLink --> Customer: Refund confirmation
+
+    else Support rejects
+        Support --> PayLink: Reject refund
+        PayLink --> Customer: Refund request rejected
+    end
+end
+
+@enduml

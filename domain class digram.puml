@@ -1,0 +1,73 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "Accounts & Wallet" {
+    class Customer
+    class Agent
+    class Wallet
+    class LedgerEntry
+    class WalletHold
+}
+
+package "Biller Catalog" {
+    class Biller
+    class Service
+}
+
+package "Payment Processing" {
+    class Payment {
+        paymentId
+        amount
+        status
+        pay()
+        refund()
+    }
+}
+
+package "Biller Integration" {
+    interface BillerAdapter {
+        sendPayment()
+    }
+    class ElectroCoAdapter
+    class AquaCoAdapter
+    class TopUpNetAdapter
+    class NetCoAdapter
+}
+
+package "Fees & Fraud" {
+    class FeeCalculator {
+        calculateFee()
+    }
+    class FraudChecker {
+        checkPayment()
+    }
+}
+
+package "Notifications" {
+    class NotificationService {
+        sendNotification()
+    }
+}
+
+Customer "1" -- "1" Wallet
+Agent "1" -- "0..*" Wallet
+Wallet "1" -- "*" LedgerEntry
+Wallet "1" -- "*" WalletHold
+
+Customer "1" -- "*" Payment
+Payment "*" -- "1" Wallet
+Payment "*" -- "1" Service
+Biller "1" -- "*" Service
+
+Payment --> BillerAdapter
+BillerAdapter <|.. ElectroCoAdapter
+BillerAdapter <|.. AquaCoAdapter
+BillerAdapter <|.. TopUpNetAdapter
+BillerAdapter <|.. NetCoAdapter
+
+Payment --> FeeCalculator
+Payment --> FraudChecker
+Payment --> NotificationService
+Payment --> WalletHold
+
+@enduml
