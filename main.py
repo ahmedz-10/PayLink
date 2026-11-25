@@ -1,35 +1,23 @@
-import os
+import sys
+from pathlib import Path
 
-import psycopg
-from fastapi import FastAPI
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-app = FastAPI(title="PayLink API")
+from fastapi.testclient import TestClient
+from main import app
 
-
-@app.get("/")
-def home():
-    return {"message": "PayLink application is running!"}
+client = TestClient(app)
 
 
-@app.get("/health")
-def health():
-    try:
-        with psycopg.connect(
-            host=os.getenv("DB_HOST", "localhost"),
-            port=5432,
-            dbname=os.getenv("DB_NAME", "paylink"),
-            user=os.getenv("DB_USER", "paylink_user"),
-            password=os.getenv("DB_PASSWORD", "paylink_password"),
-        ) as connection:
-            connection.execute("SELECT 1")
+def test_home():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "PayLink application is running!"
+    }
 
-        return {
-            "application": "running",
-            "database": "connected",
-        }
 
-    except psycopg.Error:
-        return {
-            "application": "running",
-            "database": "disconnected",
-        }
+def test_health():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["application"] == "running"
