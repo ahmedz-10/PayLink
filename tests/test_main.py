@@ -3,9 +3,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from main import app
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 client = TestClient(app)
 
